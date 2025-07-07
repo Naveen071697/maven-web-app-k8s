@@ -1,13 +1,12 @@
-name: Deploy Java App to EKS
+name: Build and Deploy to EKS
 
 on:
   push:
     branches:
-      - main  # change to your branch if needed
+      - main
 
 jobs:
   deploy:
-    name: Build & Deploy to EKS
     runs-on: ubuntu-latest
 
     env:
@@ -18,8 +17,17 @@ jobs:
       AWS_REGION: ap-southeast-1
 
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build WAR file
+        run: mvn clean package
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -28,15 +36,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
+      - name: Login to ECR
         run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $ECR_REGISTRY
 
       - name: Build Docker image
         run: |
           docker build -t $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG .
 
-      - name: Push Docker image to Amazon ECR
+      - name: Push Docker image
         run: |
           docker push $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG
 
