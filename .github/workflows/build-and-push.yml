@@ -3,7 +3,7 @@ name: Build and Push to ECR
 on:
   push:
     branches:
-      - main  # Change this if your default branch is different
+      - main  # Change if your branch is different
 
 jobs:
   build-push:
@@ -34,11 +34,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
+      - name: Login to Amazon ECR (preferred method)
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
 
-      - name: Build and push Docker image to ECR
+      # Optional fallback ECR login (in case above fails silently)
+      - name: Fallback Docker login to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+      - name: Build Docker image
         run: |
           docker build -t $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG .
+
+      - name: Push Docker image to ECR
+        run: |
           docker push $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG
