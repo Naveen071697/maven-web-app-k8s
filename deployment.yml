@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-maven-app
+  labels:
+    app: java-maven
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: java-maven
+  template:
+    metadata:
+      labels:
+        app: java-maven
+    spec:
+      containers:
+      - name: java-maven-container
+        image: 641972036343.dkr.ecr.ap-southeast-1.amazonaws.com/java:latest
+        ports:
+        - containerPort: 8080
