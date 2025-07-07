@@ -1,22 +1,24 @@
-name: Build, Push to ECR & Deploy to EKS
+name: Build and Deploy to EKS
 
 on:
   push:
     branches:
-      - main   # or your branch
+      - main  # Change this if your default branch is different
 
 env:
-  AWS_REGION: ap-south-1               # Your AWS region
-  EKS_CLUSTER_NAME: java-maven         # Your EKS cluster name
-  IMAGE_REPO_NAME: java                 # ECR repo name (must be created in ECR)
-  IMAGE_TAG: latest                     # Image tag
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}       # e.g. 641972036343.dkr.ecr.ap-south-1.amazonaws.com
+  IMAGE_REPO_NAME: java                            # your ECR repository name
+  IMAGE_TAG: latest                               # tag for your image
+  EKS_CLUSTER_NAME: java-maven                     # your EKS cluster name
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Configure AWS credentials
@@ -27,28 +29,20 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build Docker image
         run: |
           docker build -t $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG .
-        env:
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
 
       - name: Push Docker image to ECR
         run: |
           docker push $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG
-        env:
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
 
       - name: Update kubeconfig for EKS cluster
         run: |
           aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          EKS_CLUSTER_NAME: ${{ env.EKS_CLUSTER_NAME }}
 
-      - name: Deploy to EKS
+      - name: Deploy to EKS cluster
         run: |
-          kubectl apply -f k8s-deploy.yml --validate=false
+          kubectl apply -f k8s-deploy.yml
