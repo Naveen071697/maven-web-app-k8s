@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: java-maven-container
-        image: 641972036343.dkr.ecr.ap-southeast-1.amazonaws.com/java:latest
+        image: 641972036343.dkr.ecr.ap-south-1.amazonaws.com/java:latest
         ports:
         - containerPort: 8080
