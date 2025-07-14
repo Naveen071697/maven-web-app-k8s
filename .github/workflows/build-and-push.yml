@@ -11,7 +11,7 @@ env:
   ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
   IMAGE_REPO_NAME: java
   IMAGE_TAG: latest
-  EKS_CLUSTER_NAME: java-maven
+  EKS_CLUSTER_NAME: finsire-cluster
 
 jobs:
   build-and-deploy:
